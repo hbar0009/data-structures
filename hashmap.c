@@ -1,59 +1,49 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 static const int polynomial_base = 31;
-static const float max_fill = 0.5;
+// static const float max_fill = 0.5;
 
-struct KeyValuePair {
+typedef struct KeyValuePair {
     char* key;
     char* val;
-};
+} keyval;
 
-struct HashMap {
+typedef struct HashMap {
     unsigned int capacity;
-    struct KeyValuePair values[]; // NOTE: should i be passing a pointer?
-};
+    keyval values[10]; // NOTE: should i be passing a pointer?
+} hashmap;
 
-void resize(int old_len, char* old[], int new_len, char* new[]);
 int hash(char word[], int table_size);
-void print_array(int len, char* arr[]);
-void print_map(struct HashMap map);
-void insert(char key[], char val[], struct HashMap map);
-void delete(char key[], struct HashMap map);
-char* get(char key[], struct HashMap map);
-void resizeM(struct HashMap map);
+void print_map(hashmap map);
+void insert(char key[], char val[], hashmap map);
+void delete(char key[], hashmap map);
+char* get(char key[], hashmap map);
+void resize(hashmap map);
 
 int main()
 {
-    char** arr = malloc(10 * sizeof(char*));
-    arr[hash("first", 10)] = "first";
-    arr[hash("second", 10)] = "second";
-    arr[hash("third", 10)] = "third";
+    printf("Start of program\n");
+    int initial_capacity = 10;
+    keyval arr[10];
 
-    char** arr2 = malloc(20 * sizeof(char*));
+    printf("Intializing map\n");
+    hashmap map = { initial_capacity };
 
-    resize(10, arr, 20, arr2);
+    printf("Size of (keyval): %lu\n", sizeof(keyval));
+    printf("Size of (*arr): %lu\n", sizeof(*arr));
+    printf("Size of (arr): %lu\n", sizeof(arr));
 
-    free(arr);
+    printf("Copying into map values\n");
+    memcpy(map.values, arr, sizeof(*arr));
 
-    print_array(20, arr2);
+    printf("Printing map\n");
+    print_map(map);
 
-    free(arr2);
-
+    printf("End of program\n");
     return 0;
-}
-
-void resize(int old_len, char* old[], int new_len, char* new[])
-{
-    for (int i = 0; i < old_len; i++) {
-        // FIXME: this does not check for collisons
-        if (old[i]) {
-            new[hash(old[i], new_len)] = old[i];
-        }
-    }
 }
 
 int hash(char word[], int table_size)
@@ -69,25 +59,17 @@ int hash(char word[], int table_size)
     return hash_val;
 }
 
-void print_array(int len, char* arr[])
-{
-    for (int i = 0; i < len; i++) {
-        printf("Element %i: %s\n", i, arr[i]);
-    }
-}
-
-void print_map(struct HashMap map)
+void print_map(hashmap map)
 {
     for (int i = 0; i < map.capacity; i++) {
-        struct KeyValuePair pair = map.values[i];
-        printf("Position %i: (%s, %s)\n", i, pair.key, pair.val);
+        printf("Position %i: (%s, %s)\n", i, map.values[i].key, map.values[i].val);
     }
 }
 
-void insert(char key[], char val[], struct HashMap map)
+void insert(char key[], char val[], hashmap map)
 {
-    int hash_val = hash(key, map.capacity);
-    // NOTE: do i need to malloc this?
-    struct KeyValuePair pair = { key, val };
-    map.values[hash_val] = pair;
+    // int hash_val = hash(key, map.capacity);
+    // // NOTE: do i need to malloc this?
+    // keyval pair = { key, val };
+    // map.values[hash_val] = pair;
 }
