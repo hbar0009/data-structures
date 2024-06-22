@@ -42,26 +42,19 @@ int main()
     hashmap* map = new_hashmap();
 
     printf("Inserting into map\n");
-    for (int i = 0; i < 6; ++i) {
-        char key[10];
-        char val[10];
+    insert("sdfj", "blah", map);
+    insert("shela", "something", map);
+    insert("aabb", "something else", map);
+    insert("abrea", "b 22 lah", map);
+    insert("sdfj", "changed", map);
 
-        snprintf(key, 10, "%i", i);
-        snprintf(val, 10, "%i", i);
+    printf("map[abrea]: %s\n", get("abrea", map));
+    printf("map[sdfj]: %s\n", get("sdfj", map));
+    printf("map[notin]: %s\n", get("notin", map));
 
-        insert(key, val, map);
-    }
-
-    printf("inserting duplicate\n");
-    insert("1", "blah", map);
-
-    printf("Printing map\n");
     print_map(map);
 
-    printf("Deleting hashmap\n");
     del_hashmap(map);
-
-    printf("End of program\n");
     return 0;
 }
 
@@ -103,6 +96,7 @@ void del_hashmap(hashmap* map)
         }
     }
 
+    free(map->values);
     free(map);
 }
 
@@ -204,4 +198,15 @@ void insert(char key[], char val[], hashmap* map)
     } else {
         strcpy(map->values[insert_index]->val, val);
     }
+}
+
+char* get(char key[], hashmap* map)
+{
+    int i = find_index_of_key_or_empty(key, map);
+
+    if (map->values[i] && !map->values[i]->deleted) {
+        return map->values[i]->val;
+    }
+
+    return NULL;
 }
