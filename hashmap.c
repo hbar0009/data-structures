@@ -1,9 +1,11 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define INITIAL_CAPACITY 10
+#define MAX_STR_SIZE 50
 
 static const int polynomial_base = 31;
 static const float max_fill = 0.5;
@@ -17,16 +19,16 @@ typedef struct KeyValuePair {
 typedef struct HashMap {
     unsigned int capacity;
     unsigned int num_elems;
-    keyval values[INITIAL_CAPACITY]; // NOTE: should i be passing a pointer?
+    keyval* values[INITIAL_CAPACITY]; // NOTE: should i be passing a pointer?
 } hashmap;
 
 int hash(char word[], int table_size);
-void print_map(hashmap map);
+void print_map(hashmap* map);
 void resize(hashmap* map);
 int find_index_of_key_or_empty(char key[], hashmap* map);
 void insert(char key[], char val[], hashmap* map);
-void delete(char key[], hashmap map);
-char* get(char key[], hashmap map);
+void delete(char key[], hashmap* map);
+char* get(char key[], hashmap* map);
 
 int main()
 {
@@ -34,10 +36,18 @@ int main()
     hashmap map = { INITIAL_CAPACITY };
 
     printf("Inserting into map\n");
-    insert("somekey", "anotherval", &map);
+    for (int i = 0; i < 10; ++i) {
+        char key[10];
+        char val[10];
+
+        snprintf(key, 10, "%i", i);
+        snprintf(val, 10, "%i", i);
+
+        insert(key, val, &map);
+    }
 
     printf("Printing map\n");
-    print_map(map);
+    print_map(&map);
 
     printf("End of program\n");
     return 0;
@@ -56,10 +66,14 @@ int hash(char word[], int table_size)
     return hash_val;
 }
 
-void print_map(hashmap map)
+void print_map(hashmap* map)
 {
-    for (int i = 0; i < map.capacity; i++) {
-        printf("Position %i: (%s, %s)\n", i, map.values[i].key, map.values[i].val);
+    for (int i = 0; i < map->capacity; i++) {
+        if (map->values[i]) {
+            printf("Position %i: (%s, %s)\n", i, map->values[i]->key, map->values[i]->val);
+        } else {
+            printf("Position %i: (null)\n", i);
+        }
     }
 }
 
@@ -74,21 +88,21 @@ int find_index_of_key_or_empty(char key[], hashmap* map)
     int hash_val = hash(key, map->capacity);
 
     int i = 0, first_tombstone = -1, search_index = hash_val;
-    keyval index_val;
+    keyval* index_val;
 
     // search until we find an empty spot
-    while (map->values[search_index].key != NULL) {
+    while (map->values[search_index]) {
         search_index = (hash_val + i * i) % map->capacity;
 
         index_val = map->values[search_index];
 
         // if we find the key, we will update it
-        if (index_val.key == key) {
+        if (index_val->key == key) {
             return search_index;
         }
 
         // the first time we find a tombstone, take note of its index
-        if (index_val.deleted && first_tombstone != -1) {
+        if (index_val->deleted && first_tombstone != -1) {
             first_tombstone = search_index;
         }
 
@@ -111,7 +125,11 @@ void insert(char key[], char val[], hashmap* map)
 
     int insert_index = find_index_of_key_or_empty(key, map);
 
-    map->values[insert_index].key = key;
-    map->values[insert_index].val = val;
-    map->values[insert_index].deleted = false;
+    map->values[insert_index] = malloc(sizeof(keyval));
+    map->values[insert_index]->key = malloc(MAX_STR_SIZE * sizeof(char));
+    map->values[insert_index]->val = malloc(MAX_STR_SIZE * sizeof(char));
+
+    strcpy(map->values[insert_index]->key, key);
+    strcpy(map->values[insert_index]->val, val);
+    map->values[insert_index]->deleted = false;
 }
