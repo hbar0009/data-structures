@@ -22,6 +22,9 @@ typedef struct HashMap {
     keyval* values[INITIAL_CAPACITY]; // NOTE: should i be passing a pointer?
 } hashmap;
 
+keyval* new_keyval(char key[], char val[]);
+void del_keyval(keyval* kv);
+
 int hash(char word[], int table_size);
 void print_map(hashmap* map);
 void resize(hashmap* map);
@@ -36,7 +39,7 @@ int main()
     hashmap map = { INITIAL_CAPACITY };
 
     printf("Inserting into map\n");
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 5; ++i) {
         char key[10];
         char val[10];
 
@@ -46,11 +49,34 @@ int main()
         insert(key, val, &map);
     }
 
+    printf("inserting duplicate\n");
+    insert("1", "blah", &map);
+
     printf("Printing map\n");
     print_map(&map);
 
     printf("End of program\n");
     return 0;
+}
+
+keyval* new_keyval(char key[], char val[])
+{
+    keyval* kv = malloc(sizeof(keyval));
+    kv->key = malloc(MAX_STR_SIZE * sizeof(char));
+    kv->val = malloc(MAX_STR_SIZE * sizeof(char));
+
+    strcpy(kv->key, key);
+    strcpy(kv->val, val);
+    kv->deleted = false;
+
+    return kv;
+}
+
+void del_keyval(keyval* kv)
+{
+    free(kv->val);
+    free(kv->key);
+    free(kv);
 }
 
 int hash(char word[], int table_size)
@@ -96,8 +122,12 @@ int find_index_of_key_or_empty(char key[], hashmap* map)
 
         index_val = map->values[search_index];
 
-        // if we find the key, we will update it
-        if (index_val->key == key) {
+        if (!index_val) {
+            break;
+        }
+
+        // if we find the key
+        if (strcmp(index_val->key, key) == 0) {
             return search_index;
         }
 
@@ -124,12 +154,12 @@ void insert(char key[], char val[], hashmap* map)
     }
 
     int insert_index = find_index_of_key_or_empty(key, map);
+    printf("calculated index \n");
 
-    map->values[insert_index] = malloc(sizeof(keyval));
-    map->values[insert_index]->key = malloc(MAX_STR_SIZE * sizeof(char));
-    map->values[insert_index]->val = malloc(MAX_STR_SIZE * sizeof(char));
-
-    strcpy(map->values[insert_index]->key, key);
-    strcpy(map->values[insert_index]->val, val);
-    map->values[insert_index]->deleted = false;
+    if (!map->values[insert_index]) {
+        map->values[insert_index] = new_keyval(key, val);
+    } else {
+        printf("inside else\n");
+        strcpy(map->values[insert_index]->val, val);
+    }
 }
