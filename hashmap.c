@@ -19,11 +19,14 @@ typedef struct KeyValuePair {
 typedef struct HashMap {
     unsigned int capacity;
     unsigned int num_elems;
-    keyval* values[INITIAL_CAPACITY]; // NOTE: should i be passing a pointer?
+    keyval** values;
 } hashmap;
 
 keyval* new_keyval(char key[], char val[]);
 void del_keyval(keyval* kv);
+
+hashmap* new_hashmap();
+void del_hashmap(hashmap* map);
 
 int hash(char word[], int table_size);
 void print_map(hashmap* map);
@@ -36,24 +39,27 @@ char* get(char key[], hashmap* map);
 int main()
 {
     printf("Intializing map\n");
-    hashmap map = { INITIAL_CAPACITY };
+    hashmap* map = new_hashmap();
 
     printf("Inserting into map\n");
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 6; ++i) {
         char key[10];
         char val[10];
 
         snprintf(key, 10, "%i", i);
         snprintf(val, 10, "%i", i);
 
-        insert(key, val, &map);
+        insert(key, val, map);
     }
 
     printf("inserting duplicate\n");
-    insert("1", "blah", &map);
+    insert("1", "blah", map);
 
     printf("Printing map\n");
-    print_map(&map);
+    print_map(map);
+
+    printf("Deleting hashmap\n");
+    del_hashmap(map);
 
     printf("End of program\n");
     return 0;
@@ -77,6 +83,27 @@ void del_keyval(keyval* kv)
     free(kv->val);
     free(kv->key);
     free(kv);
+}
+
+hashmap* new_hashmap()
+{
+    hashmap* map = malloc(sizeof(hashmap));
+    map->values = malloc(INITIAL_CAPACITY * sizeof(keyval*));
+    map->num_elems = 0;
+    map->capacity = INITIAL_CAPACITY;
+
+    return map;
+}
+
+void del_hashmap(hashmap* map)
+{
+    for (int i = 0; i < map->capacity; ++i) {
+        if (map->values[i]) {
+            del_keyval(map->values[i]);
+        }
+    }
+
+    free(map);
 }
 
 int hash(char word[], int table_size)
@@ -105,6 +132,22 @@ void print_map(hashmap* map)
 
 void resize(hashmap* map)
 {
+    int old_capacity = map->capacity;
+    map->capacity *= 2; // TODO: just arbitrarily doubling the size for now
+
+    keyval** old_arr = map->values;
+
+    map->values = malloc(map->capacity * sizeof(keyval*));
+
+    keyval* pair;
+    int insert_index;
+
+    for (int i = 0; i < old_capacity; i++) {
+        if ((pair = old_arr[i])) {
+            insert_index = find_index_of_key_or_empty(pair->key, map);
+            map->values[insert_index] = pair;
+        }
+    }
 }
 
 int find_index_of_key_or_empty(char key[], hashmap* map)
@@ -154,12 +197,11 @@ void insert(char key[], char val[], hashmap* map)
     }
 
     int insert_index = find_index_of_key_or_empty(key, map);
-    printf("calculated index \n");
 
     if (!map->values[insert_index]) {
         map->values[insert_index] = new_keyval(key, val);
+        map->num_elems += 1;
     } else {
-        printf("inside else\n");
         strcpy(map->values[insert_index]->val, val);
     }
 }
