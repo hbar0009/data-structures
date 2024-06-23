@@ -52,6 +52,11 @@ int main()
     printf("map[sdfj]: %s\n", get("sdfj", map));
     printf("map[notin]: %s\n", get("notin", map));
 
+    delete ("abrea", map);
+    printf("after delete: map[abrea]: %s\n", get("abrea", map));
+    delete ("notin", map);
+    printf("after delete: map[notin]: %s\n", get("notin", map));
+
     print_map(map);
 
     del_hashmap(map);
@@ -116,7 +121,7 @@ int hash(char word[], int table_size)
 void print_map(hashmap* map)
 {
     for (int i = 0; i < map->capacity; i++) {
-        if (map->values[i]) {
+        if (map->values[i] && !map->values[i]->deleted) {
             printf("Position %i: (%s, %s)\n", i, map->values[i]->key, map->values[i]->val);
         } else {
             printf("Position %i: (null)\n", i);
@@ -197,6 +202,15 @@ void insert(char key[], char val[], hashmap* map)
         map->num_elems += 1;
     } else {
         strcpy(map->values[insert_index]->val, val);
+    }
+}
+
+void delete(char key[], hashmap* map)
+{
+    int i = find_index_of_key_or_empty(key, map);
+
+    if (map->values[i] && !map->values[i]->deleted) {
+        map->values[i]->deleted = true;
     }
 }
 
